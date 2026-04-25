@@ -1,5 +1,34 @@
 from typing import List, Dict
 
+def validate_ball_events(ball_events: List[Dict]):
+    seen = set()
+
+    for ball in ball_events:
+        key = (ball["over"], ball["ball_in_over"])
+
+        # Duplicate check
+        if key in seen:
+            raise ValueError(f"Duplicate ball detected: over {ball['over']} ball {ball['ball_in_over']}")
+        seen.add(key)
+
+        # Over-ball consistency check
+        expected = f"{ball['over']}.{ball['ball_in_over']}"
+        if ball["over_ball"] != expected:
+            raise ValueError(f"Mismatch in over_ball format: expected {expected}")
+
+        # Logical constraints
+        if ball["runs"] < 0 or ball["extras"] < 0:
+            raise ValueError("Runs or extras cannot be negative")
+
+        if ball["ball_in_over"] > 6:
+            raise ValueError(f"Invalid ball number: {ball['ball_in_over']} in over {ball['over']}")
+
+    # Ensure sorted sequence
+    sorted_events = sorted(ball_events, key=lambda x: (x["over"], x["ball_in_over"]))
+    if ball_events != sorted_events:
+        raise ValueError("Ball events must be in chronological order")
+
+
 def build_label(ball: Dict) -> str:
     label = f"{ball['over_ball']} - {ball['striker']} vs {ball['bowler']} : {ball['runs']} run(s)"
     if ball["extras"] > 0:
@@ -38,4 +67,4 @@ def build_over_summary(ball_events: List[Dict]) -> List[Dict]:
             "label": build_label(ball)
         })
 
-    return list(sorted(overs.values(), key=lambda x: x["over_number"]))
+    return sorted(overs.values(), key=lambda x: x["over_number"])
