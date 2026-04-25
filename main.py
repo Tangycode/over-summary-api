@@ -1,45 +1,42 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Dict, Any
-
-from over_summary_service import generate_over_summary
+from fastapi.middleware.cors import CORSMiddleware
+from schemas import OverSummaryRequest
+from services import build_over_summary
 
 app = FastAPI()
 
-# -------------------------------
-# Request Schema (Integration-Ready)
-# -------------------------------
+# CORS (required for frontend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class BallEvent(BaseModel):
-    ball: float  # e.g., 0.1, 0.2
-    runs_off_bat: int
-    extras: int
-    extra_type: str | None = None  # wide, no_ball, bye, leg_bye, None
-    wicket: bool = False
+@app.get("/")
+def root():
+    return {"message": "Over Summary API is running"}
 
-class OverInput(BaseModel):
-    match_id: str
-    innings: int
-    over_number: int
-    balls: List[BallEvent]
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
-# -------------------------------
-# Route Layer (Thin Controller)
-# -------------------------------
+@app.post("/overs/summary")
+def get_over_summary(request: OverSummaryRequest):
+    if not request.innings_id:
+        raise HTTPException(status_code=400, detail="innings_id is required")
 
-@app.post("/over-summary")
-def over_summary(input_data: OverInput):
-    """
-    Integration-ready endpoint:
-    - Accepts structured payload (not hardcoded data)
-    - Delegates computation to service layer
-    - Returns frontend-ready response
-    """
+    if not request.ball_events or len(request.ball_events) == 0:
+        raise HTTPException(status_code=400, detail="ball_events cannot be empty")
+
     try:
-        summary = generate_over_summary(input_data.dict())
+        result = build_over_summary(request.ball_events)
         return {
-            "status": "success",
-            "data": summary
+            "innings_id": request.innings_id,
+            "overs": result
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
