@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 class BallEvent(BaseModel):
     over: int = Field(..., ge=0)
@@ -14,3 +14,8 @@ class BallEvent(BaseModel):
 class OverSummaryRequest(BaseModel):
     innings_id: str
     ball_events: List[BallEvent]
+
+    # Optional Khel AI extensions
+    match: Optional[Dict] = None
+    teams: Optional[Dict] = None
+    players: Optional[Dict] = None
