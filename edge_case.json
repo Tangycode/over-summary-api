@@ -1,6 +1,7 @@
 {
-  "innings_id": "I003",
+  "innings_id": "I004",
   "ball_events": [
-    {"over": 5, "ball_in_over": 1, "over_ball": "5.1", "striker": "X", "bowler": "Y", "runs": 0, "extras": 5, "wicket": 0}
+    {"over": 1, "ball_in_over": 1, "over_ball": "1.1", "striker": "A", "bowler": "B", "runs": 0, "extras": 5, "wicket": 0},
+    {"over": 1, "ball_in_over": 2, "over_ball": "1.2", "striker": "A", "bowler": "B", "runs": 0, "extras": 0, "wicket": 1}
   ]
 }
