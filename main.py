@@ -1,11 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from schemas import OverSummaryRequest
-from services import build_over_summary
+from services import build_over_summary, validate_ball_events
 
 app = FastAPI()
 
-# CORS (required for frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,20 +22,23 @@ def health():
     return {"status": "ok"}
 
 @app.post("/overs/summary")
-def get_over_summary(request: OverSummaryRequest):
+def over_summary(request: OverSummaryRequest):
     if not request.innings_id:
-        raise HTTPException(status_code=400, detail="innings_id is required")
+        raise HTTPException(status_code=400, detail="Missing innings_id")
 
-    if not request.ball_events or len(request.ball_events) == 0:
+    if not request.ball_events:
         raise HTTPException(status_code=400, detail="ball_events cannot be empty")
 
     try:
-        result = build_over_summary(request.ball_events)
+        validate_ball_events(request.ball_events)
+        overs = build_over_summary(request.ball_events)
+
         return {
             "innings_id": request.innings_id,
-            "overs": result
+            "overs": overs
         }
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
